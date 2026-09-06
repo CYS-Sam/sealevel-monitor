@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>CY Tide Monitor</title>
+
+  https://cdn.jsdelivr.net/npm/chart.jsscript>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Arial,
+        "Noto Sans KR",
+        sans-serif;
+      background: #eef3f8;
+      color: #172033;
+    }
+
+    header {
+      background:
+        linear-gradient(
+          135deg,
+          #073b66,
+          #0b74b8
+        );
+      color: white;
+      padding: 25px 18px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 27px;
+    }
+
+    header p {
+      margin:
+        8px 0 0 0;
+      opacity: 0.9;
+    }
+
+    .container {
+      width: min(1100px, 94%);
+      margin: 20px auto;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: white;
+      padding: 12px 16px;
+      border-radius: 10px;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.08);
+      margin-bottom: 16px;
+    }
+
+    .online {
+      color: #16803b;
+      font-weight: bold;
+    }
+
+    .offline {
+      color: #b42318;
+      font-weight: bold;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.09);
+      text-align: center;
+    }
+
+    .card-title {
+      color: #687386;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+
+    .card-value {
+      font-size: 43px;
+      font-weight: bold;
+      color: #075d96;
+    }
+
+    .card-unit {
+      font-size: 20px;
+      margin-left: 4px;
+      color: #536071;
+    }
+
+    .card-subtitle {
+      margin-top: 10px;
+      color: #7a8493;
+      font-size: 13px;
+    }
+
+    .panel {
+      background: white;
+      margin-top: 16px;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.09);
+    }
+
+    .panel h2 {
+      font-size: 19px;
+      margin:
+        0 0 15px 0;
+    }
+
+    .chart-area {
+      position: relative;
+      height: 340px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 11px 10px;
+      border-bottom:
+        1px solid #e2e7ed;
+      text-align: center;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #075d96;
+      color: white;
+      z-index: 1;
+    }
+
+    tbody tr:first-child {
+      background: #eaf7ee;
+      font-weight: bold;
+    }
+
+    tbody tr:hover {
+      background: #f2f7fb;
+    }
+
+    footer {
+      text-align: center;
+      color: #748092;
+      padding: 25px 10px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 650px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .card-value {
+        font-size: 38px;
+      }
+
+      header h1 {
+        font-size: 22px;
+      }
+
+      .chart-area {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>CY Tide Monitor</h1>
+    <p>TFMini Plus 실시간 거리 모니터링</p>
+  </header>
+
+  <main class="container">
+
+    <div class="status-bar">
+      <div id="connectionStatus">
+        데이터 연결 확인 중
+      </div>
+
+      <div id="browserRefreshTime">
+        화면 갱신: 확인 중
+      </div>
+    </div>
+
+    <section class="cards">
+
+      <div class="card">
+        <div class="card-title">
+          현재 측정거리
+        </div>
+
+        <div>
+          <span
+            class="card-value"
+            id="currentDistance"
+          >
+            --
+          </span>
+
+          <span class="card-unit">m</span>
+        </div>
+
+        <div
+          class="card-subtitle"
+          id="currentTime"
+        >
+          측정시간 확인 중
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          20초 평균거리
+        </div>
+
+        <div>
+          <span
+            class="card-value"
+            id="averageDistance"
+          >
+            --
+          </span>
+
+          <span class="card-unit">m</span>
+        </div>
+
+        <div
+          class="card-subtitle"
+          id="averageTime"
+        >
+          측정시간 확인 중
+        </div>
+      </div>
+
+    </section>
+
+    <section class="panel">
+      <h2>거리 변화 그래프</h2>
+
+      <div class="chart-area">
+        <canvas id="distanceChart"></canvas>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>최근 측정 기록</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Entry ID</th>
+              <th>측정 시각</th>
+              <th>현재 거리</th>
+              <th>20초 평균거리</th>
+            </tr>
+          </thead>
+
+          <tbody id="dataTable">
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    CY Shipping Sea Level Monitoring System
+  </footer>
+
+  <script>
+    const channelID = "3474360";
+
+    const numberOfResults = 50;
+
+    const refreshInterval = 20000;
+
+    const apiBase =
+      "https:" +
+      "//api.thingspeak.com";
+
+    let distanceChart = null;
+
+    function formatNumber(value) {
+      const number = Number(value);
+
+      if (!Number.isFinite(number)) {
+        return "--";
+      }
+
+      return number.toFixed(2);
+    }
+
+    function formatDateTime(value) {
+      if (!value) {
+        return "--";
+      }
+
+      const date = new Date(value);
+
+      return date.toLocaleString(
+        "ko-KR",
+        {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        }
+      );
+    }
+
+    function formatChartTime(value) {
+      const date = new Date(value);
+
+      return date.toLocaleTimeString(
+        "ko-KR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        }
+      );
+    }
+
+    function createOrUpdateChart(feeds) {
+      const validFeeds =
+        feeds.filter(
+          feed =>
+            feed.field1 !== null ||
+            feed.field2 !== null
+        );
+
+      const labels =
+        validFeeds.map(
+          feed =>
+            formatChartTime(
+              feed.created_at
+            )
+        );
+
+      const currentValues =
+        validFeeds.map(
+          feed =>
+            feed.field1 === null
+              ? null
+              : Number(feed.field1)
+        );
+
+      const averageValues =
+        validFeeds.map(
+          feed =>
+            feed.field2 === null
+              ? null
+              : Number(feed.field2)
+        );
+
+      const chartData = {
+        labels: labels,
+        datasets: [
+          {
+            label: "현재 거리 (m)",
+            data: currentValues,
+            borderColor: "#ef7d22",
+            backgroundColor:
+              "rgba(239, 125, 34, 0.12)",
+            borderWidth: 2,
+            pointRadius: 2,
+            tension: 0.2,
+            spanGaps: true
+          },
+          {
+            label: "20초 평균거리 (m)",
+            data: averageValues,
+            borderColor: "#075d96",
+            backgroundColor:
+              "rgba(7, 93, 150, 0.12)",
+            borderWidth: 3,
+            pointRadius: 2,
+            tension: 0.2,
+            spanGaps: true
+          }
+        ]
+      };
+
+      if (distanceChart === null) {
+        const context =
+          document
+            .getElementById(
+              "distanceChart"
+            )
+            .getContext("2d");
+
+        distanceChart =
+          new Chart(
+            context,
+            {
+              type: "line",
+              data: chartData,
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                  mode: "index",
+                  intersect: false
+                },
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "측정 시각"
+                    }
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "거리 (m)"
+                    }
+                  }
+                }
+              }
+            }
+          );
+      } else {
+        distanceChart.data =
+          chartData;
+
+        distanceChart.update();
+      }
+    }
+
+    function updateTable(feeds) {
+      const table =
+        document.getElementById(
+          "dataTable"
+        );
+
+      table.innerHTML = "";
+
+      const newestFirst =
+        feeds
+          .slice()
+          .reverse();
+
+      newestFirst.forEach(feed => {
+        if (
+          feed.field1 === null &&
+          feed.field2 === null
+        ) {
+          return;
+        }
+
+        const row =
+          document.createElement("tr");
+
+        const entryCell =
+          document.createElement("td");
+
+        const timeCell =
+          document.createElement("td");
+
+        const currentCell =
+          document.createElement("td");
+
+        const averageCell =
+          document.createElement("td");
+
+        entryCell.textContent =
+          feed.entry_id ?? "--";
+
+        timeCell.textContent =
+          formatDateTime(
+            feed.created_at
+          );
+
+        currentCell.textContent =
+          formatNumber(
+            feed.field1
+          ) + " m";
+
+        averageCell.textContent =
+          formatNumber(
+            feed.field2
+          ) + " m";
+
+        row.appendChild(entryCell);
+        row.appendChild(timeCell);
+        row.appendChild(currentCell);
+        row.appendChild(averageCell);
+
+        table.appendChild(row);
+      });
+    }
+
+    async function loadThingSpeakData() {
+      const statusElement =
+        document.getElementById(
+          "connectionStatus"
+        );
+
+      const refreshElement =
+        document.getElementById(
+          "browserRefreshTime"
+        );
+
+      const requestUrl =
+        apiBase +
+        "/channels/" +
+        channelID +
+        "/feeds.json?results=" +
+        numberOfResults +
+        "&_=" +
+        Date.now();
+
+      try {
+        const response =
+          await fetch(
+            requestUrl,
+            {
+              cache: "no-store"
+            }
+          );
+
+        if (!response.ok) {
+          throw new Error(
+            "HTTP " +
+            response.status
+          );
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          !Array.isArray(data.feeds) ||
+          data.feeds.length === 0
+        ) {
+          throw new Error(
+            "측정 데이터가 없습니다."
+          );
+        }
+
+        const validFeeds =
+          data.feeds.filter(
+            feed =>
+              feed.field1 !== null ||
+              feed.field2 !== null
+          );
+
+        if (validFeeds.length === 0) {
+          throw new Error(
+            "유효한 거리값이 없습니다."
+          );
+        }
+
+        const latest =
+          validFeeds[
+            validFeeds.length - 1
+          ];
+
+        document
+          .getElementById(
+            "currentDistance"
+          )
+          .textContent =
+            formatNumber(
+              latest.field1
+            );
+
+        document
+          .getElementById(
+            "averageDistance"
+          )
+          .textContent =
+            formatNumber(
+              latest.field2
+            );
+
+        const latestTime =
+          formatDateTime(
+            latest.created_at
+          );
+
+        document
+          .getElementById(
+            "currentTime"
+          )
+          .textContent =
+            "최종 측정: " +
+            latestTime;
+
+        document
+          .getElementById(
+            "averageTime"
+          )
+          .textContent =
+            "최종 측정: " +
+            latestTime;
+
+        statusElement.textContent =
+          "● ThingSpeak 연결 정상";
+
+        statusElement.className =
+          "online";
+
+        refreshElement.textContent =
+          "화면 갱신: " +
+          new Date()
+            .toLocaleTimeString(
+              "ko-KR"
+            );
+
+        updateTable(data.feeds);
+
+        createOrUpdateChart(
+          data.feeds
+        );
+
+      } catch (error) {
+        statusElement.textContent =
+          "● 데이터 연결 실패: " +
+          error.message;
+
+        statusElement.className =
+          "offline";
+
+        refreshElement.textContent =
+          "마지막 시도: " +
+          new Date()
+            .toLocaleTimeString(
+              "ko-KR"
+            );
+
+        console.error(error);
+      }
+    }
+
+    loadThingSpeakData();
+
+    setInterval(
+      loadThingSpeakData,
+      refreshInterval
+    );
+  </script>
+
+</body>
+</html>
