@@ -1,0 +1,30 @@
+{
+  "name": "CY Tide Monitor",
+  "short_name": "CY Tide",
+  "description": "TFMini Plus 실시간 거리 모니터링",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b74b8",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "%EB%A1%9C%EA%B3%A0_%EC%84%B8%EB%A1%9C%20jpg.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "%EB%A1%9C%EA%B3%A0_%EC%84%B8%EB%A1%9C%20jpg.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "%EB%A1%9C%EA%B3%A0_%EC%84%B8%EB%A1%9C%20jpg.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}
